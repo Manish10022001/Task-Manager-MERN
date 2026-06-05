@@ -1,3 +1,5 @@
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const validateRegister = (req, res, next) => {
   const { name, email, password } = req.body;
 
@@ -11,7 +13,6 @@ const validateRegister = (req, res, next) => {
       .json({ message: "Password must be at least 6 characters" });
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({
       message: "Invalid email format",
@@ -20,4 +21,20 @@ const validateRegister = (req, res, next) => {
   next();
 };
 
-module.exports = { validateRegister };
+const validateLogin = (req, res, next) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "email and password are required",
+    });
+  }
+
+  if (!emailRegex.test(email)) {
+    return res.json(400).json({
+      message: "Invalid email format",
+    });
+  }
+  next();
+};
+
+module.exports = { validateRegister, validateLogin };

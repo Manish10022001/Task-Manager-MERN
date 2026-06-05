@@ -43,8 +43,39 @@ const register = async (req, res) => {
   } catch (err) {
     res
       .status(500)
-      .json({ message: "Registration error: ", error: err.message });
+      .json({ message: "Something went wrong. Please try again later" });
   }
 };
 
-module.exports = { register };
+//post /api/auth/login
+const login = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  try {
+    //find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    //compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    //return token
+    res.json({
+      message: "Login successful",
+      token: generateToken(user._id),
+      user: { id: user._id, name: user.name, email: user.email },
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please try again later",
+    });
+  }
+};
+module.exports = { register, login };
