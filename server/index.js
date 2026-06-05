@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
+const errorHandler = require("./middleware/errorMiddleware");
 
 const PORT = process.env.PORT || 8080;
 const MONGO_URI = process.env.MONGO_URI;
@@ -19,6 +20,9 @@ app.use(express.json()); // help to read json from req.body
 
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
+
+//error handler
+app.use(errorHandler);
 
 //health endpoint
 app.get("/health", (req, res) => {
