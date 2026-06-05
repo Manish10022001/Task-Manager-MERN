@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
+const authRoutes = require("./routes/authRoutes");
+
 const PORT = process.env.PORT || 8080;
 const MONGO_URI = process.env.MONGO_URI;
 const app = express();
@@ -13,7 +15,7 @@ app.use(express.json()); // help to read json from req.body
 app.get("/", (req, res) => {
   res.json({ message: "Server is running!" });
 });
-
+app.use("/api/auth", authRoutes);
 //health endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "Health OK" });
