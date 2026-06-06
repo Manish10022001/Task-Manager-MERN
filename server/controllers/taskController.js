@@ -69,4 +69,24 @@ const toggleTaskStatus = async (req, res) => {
   );
   res.status(200).json(updatedTask);
 };
-module.exports = { createTask, getTasks, updateTask, toggleTaskStatus };
+
+//Delete /api/tasks/delete/:id
+const deleteTask = async (req, res) => {
+  const task = await Task.findById(req.params.id);
+  if (!task) {
+    return res.status(404).json({
+      message: "Task not found",
+    });
+  }
+  if (task.userId.toString() !== req.user.id) {
+    return res.status(403).json({
+      message: "Not authorized",
+    });
+  }
+  await Task.findByIdAndDelete(req.params.id);
+  res.status(200).json({
+    message: "Task deleted successfully",
+  });
+};
+
+module.exports = { createTask, getTasks, updateTask, toggleTaskStatus, deleteTask };
