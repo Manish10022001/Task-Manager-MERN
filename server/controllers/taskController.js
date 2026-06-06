@@ -31,4 +31,42 @@ const createTask = async (req, res) => {
   res.status(201).json(task);
 };
 
-module.exports = { createTask, getTasks };
+//put api/update/:id -> upadte (title, description)
+const updateTask = async (req, res) => {
+  const task = await Task.findById(req.params.id);
+  if (!task) return res.status(404).json({ message: "Task not found" });
+  if (task.userId.toString() !== req.user.id)
+    return res.status(403).json({
+      message: "Not authorized",
+    });
+
+  const updatedTask = await Task.findByIdAndUpdate(
+    req.params.id,
+    {
+      title: req.body.title || task.title, //it keeps old if new not given
+      description: req.body.description ?? task.description, //same here
+      status: req.body.status || task.status,
+    },
+    { returnDocument: "after" }
+  );
+  res.status(200).json(updatedTask);
+};
+
+//patch - update status only
+const toggleTaskStatus = async (req, res) => {
+  const task = await Task.findById(req.params.id);
+  if (!task)
+    return res.status(404).json({
+      message: "Task not found",
+    });
+  if (task.userId.toString() !== req.user.id)
+    return res.status(403).json({ message: "Not authorized" });
+
+  const updatedTask = await Task.findByIdAndUpdate(
+    req.params.id,
+    { status: req.body.status },
+    { returnDocument: "after" }
+  );
+  res.status(200).json(updatedTask);
+};
+module.exports = { createTask, getTasks, updateTask, toggleTaskStatus };

@@ -30,7 +30,7 @@ const validateLogin = (req, res, next) => {
   }
 
   if (!emailRegex.test(email)) {
-    return res.json(400).json({
+    return res.status(400).json({
       message: "Invalid email format",
     });
   }
