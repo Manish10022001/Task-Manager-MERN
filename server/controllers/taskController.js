@@ -2,11 +2,33 @@ const Task = require("../models/Task");
 
 //get api/ -> get all tasks
 const getTasks = async (req, res) => {
-  // get all tasks of logged in user
-  const tasks = await Task.find({ userId: req.user.id }).sort({
-    createdAt: -1,
-  });
-
+  // // get all tasks of logged in user
+  // const tasks = await Task.find({ userId: req.user.id }).sort({
+  //   createdAt: -1,
+  // });
+  //filter
+  const { status, search } = req.query;
+  const query = { userId: req.user.id };
+  if (status && status !== "all") {
+    query.status = status;
+  }
+  if (search) {
+    query.$or = [
+      {
+        title: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        description: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+    ];
+  }
+  const tasks = await Task.find(query).sort({ createdAt: -1 });
   res.status(200).json(tasks);
 };
 
@@ -89,4 +111,10 @@ const deleteTask = async (req, res) => {
   });
 };
 
-module.exports = { createTask, getTasks, updateTask, toggleTaskStatus, deleteTask };
+module.exports = {
+  createTask,
+  getTasks,
+  updateTask,
+  toggleTaskStatus,
+  deleteTask,
+};

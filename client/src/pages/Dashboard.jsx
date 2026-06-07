@@ -8,9 +8,23 @@ import TaskCard from "../components/TaskCard";
 import TaskModal from "../components/TaskModal";
 import EmptyState from "../components/EmptyState";
 import Footer from "../components/Footer";
-
+import FilterBar from "../components/FilterBar";
 const Dashboard = () => {
   const { user } = useAuth();
+
+  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState("newest");
+
+  const [activeNav, setActiveNav] = useState("all");
+  const [search, setSearch] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [globalError, setGlobalError] = useState("");
+
+  const [deleteConfirm, setDeleteConfirm] = useState({
+    open: false,
+    taskId: null,
+  });
   const {
     tasks,
     loading,
@@ -19,18 +33,8 @@ const Dashboard = () => {
     updateTask,
     toggleTask,
     deleteTask,
-  } = useTasks();
-
-  const [filter, setFilter] = useState("all");
-  const [activeNav, setActiveNav] = useState("all");
-  const [search, setSearch] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
-  const [globalError, setGlobalError] = useState("");
-  const [deleteConfirm, setDeleteConfirm] = useState({
-    open: false,
-    taskId: null,
-  });
+  } = useTasks(filter, search);
+  
   const openAdd = () => {
     setEditingTask(null);
     setModalOpen(true);
@@ -68,12 +72,14 @@ const Dashboard = () => {
   const pending = tasks.filter((t) => t.status === "pending").length;
   const completed = tasks.filter((t) => t.status === "completed").length;
 
-  const filtered = tasks.filter((t) => {
-    const matchFilter = filter === "all" ? true : t.status === filter;
-    const matchSearch =
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.description?.toLowerCase().includes(search.toLowerCase());
-    return matchFilter && matchSearch;
+  const filtered = [...tasks].sort((a, b) => {
+    if (sort === "newest") return new Date(b.createdAt) - new Date(a.createdAt);
+    if (sort === "oldest") return new Date(a.createdAt) - new Date(b.createdAt);
+    if (sort === "az") return a.title.localeCompare(b.title);
+    if (sort === "za") return b.title.localeCompare(a.title);
+    if (sort === "pending") return a.status === "pending" ? -1 : 1;
+    if (sort === "completed") return a.status === "completed" ? -1 : 1;
+    return 0;
   });
 
   const getGreeting = () => {
@@ -171,26 +177,16 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Filter chips */}
-        <div className="flex gap-2 mb-5">
-          {[
-            { label: `All (${tasks.length})`, value: "all" },
-            { label: `Pending (${pending})`, value: "pending" },
-            { label: `Done (${completed})`, value: "completed" },
-          ].map(({ label, value }) => (
-            <button
-              key={value}
-              onClick={() => setFilter(value)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition ${
-                filter === value
-                  ? "bg-[#ECFDF5] border-[#A7F3D0] text-[#059669]"
-                  : "bg-white border-[#E8EAED] text-[#9CA3AF] hover:border-[#059669] hover:text-[#059669]"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {/* Filter component */}
+        <FilterBar
+          filter={filter}
+          setFilter={setFilter}
+          sort={sort}
+          setSort={setSort}
+          total={tasks.length}
+          pending={pending}
+          completed={completed}
+        />
 
         {/* Task list */}
         {loading ? (

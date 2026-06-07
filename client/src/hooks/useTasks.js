@@ -1,25 +1,29 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import api from "../api/axios";
-
-export function useTasks() {
+export function useTasks(filter = "all", search = "") {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchTasks = useCallback(async () => {
-    try {
-      const { data } = await api.get("/tasks");
-      setTasks(data);
-    } catch {
-      setError("Failed to load tasks");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    const fetchTasks = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (filter && filter !== "all") params.append("status", filter);
+        if (search) params.append("search", search);
+
+        const { data } = await api.get(`/tasks?${params.toString()}`);
+        setTasks(data);
+      } catch {
+        setError("Failed to load tasks");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchTasks();
-  }, [fetchTasks]);
+  }, [filter, search]);
 
   const createTask = async (form) => {
     try {

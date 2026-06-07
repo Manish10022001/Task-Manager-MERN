@@ -36,5 +36,14 @@ const validateLogin = (req, res, next) => {
   }
   next();
 };
+//middlware for filter
+const validateQuery = (req, res, next) => {
+  const { status } = req.query;
+  const allowed = ["all", "pending", "completed"];
 
-module.exports = { validateRegister, validateLogin };
+  if (status && !allowed.includes(status)) {
+    return res.status(400).json({ message: "Invalid status filter" });
+  }
+  next();
+};
+module.exports = { validateRegister, validateLogin, validateQuery };
