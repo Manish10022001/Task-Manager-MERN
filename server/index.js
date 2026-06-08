@@ -11,7 +11,13 @@ const PORT = process.env.PORT || 8080;
 const MONGO_URI = process.env.MONGO_URI;
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://donedot.vercel.app"],
+    credentials: true,
+  })
+);
+
 app.use(express.json()); // help to read json from req.body
 
 // app.get("/", (req, res) => {
