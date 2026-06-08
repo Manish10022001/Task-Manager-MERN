@@ -6,8 +6,8 @@ const getTasks = async (req, res) => {
   // const tasks = await Task.find({ userId: req.user.id }).sort({
   //   createdAt: -1,
   // });
-  //filter
-  const { status, search } = req.query;
+  //filter and pagination
+  const { status, search, page = 1, limit = 5 } = req.query;
   const query = { userId: req.user.id };
   if (status && status !== "all") {
     query.status = status;
@@ -28,8 +28,35 @@ const getTasks = async (req, res) => {
       },
     ];
   }
-  const tasks = await Task.find(query).sort({ createdAt: -1 });
-  res.status(200).json(tasks);
+
+  //pagination
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  const skip = (pageNum - 1) * limitNum;
+
+  const total = await Task.countDocuments(query);
+  const totalPending = await Task.countDocuments({
+    ...query,
+    status: "pending",
+  });
+  const totalCompleted = await Task.countDocuments({
+    ...query,
+    status: "completed",
+  });
+  const tasks = await Task.find(query)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limitNum);
+  res.status(200).json({
+    tasks,
+    total,
+    totalPending,
+    totalCompleted,
+    page: pageNum,
+    totalPages: Math.ceil(total / limitNum),
+    hasNextPage: pageNum < Math.ceil(total / limitNum),
+    hasPrevPage: pageNum > 1,
+  });
 };
 
 //post api/tasks -> create task

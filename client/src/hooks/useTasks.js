@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import api from "../api/axios";
-export function useTasks(filter = "all", search = "") {
+export function useTasks(filter = "all", search = "", page = 1) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
+  const [totalCompleted, setTotalCompleted] = useState(0);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -13,8 +17,16 @@ export function useTasks(filter = "all", search = "") {
         if (filter && filter !== "all") params.append("status", filter);
         if (search) params.append("search", search);
 
+        //pagination
+        params.append("page", page);
+        params.append("limit", 5);
+
         const { data } = await api.get(`/tasks?${params.toString()}`);
-        setTasks(data);
+        setTasks(data.tasks);
+        setTotalPages(data.totalPages);
+        setTotal(data.total);
+        setTotalPending(data.totalPending);
+        setTotalCompleted(data.totalCompleted);
       } catch {
         setError("Failed to load tasks");
       } finally {
@@ -23,7 +35,7 @@ export function useTasks(filter = "all", search = "") {
     };
 
     fetchTasks();
-  }, [filter, search]);
+  }, [filter, search, page]);
 
   const createTask = async (form) => {
     try {
@@ -80,6 +92,10 @@ export function useTasks(filter = "all", search = "") {
     tasks,
     loading,
     error,
+    totalPages,
+    total,
+    totalPending,
+    totalCompleted,
     createTask,
     updateTask,
     toggleTask,

@@ -9,11 +9,15 @@ import TaskModal from "../components/TaskModal";
 import EmptyState from "../components/EmptyState";
 import Footer from "../components/Footer";
 import FilterBar from "../components/FilterBar";
+import Pagination from "../components/Pagination";
+
 const Dashboard = () => {
   const { user } = useAuth();
 
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("newest");
+
+  const [page, setPage] = useState(1);
 
   const [activeNav, setActiveNav] = useState("all");
   const [search, setSearch] = useState("");
@@ -29,12 +33,16 @@ const Dashboard = () => {
     tasks,
     loading,
     error: taskError,
+    totalPages,
+    total,
+    totalPending,
+    totalCompleted,
     createTask,
     updateTask,
     toggleTask,
     deleteTask,
-  } = useTasks(filter, search);
-  
+  } = useTasks(filter, search, page);
+
   const openAdd = () => {
     setEditingTask(null);
     setModalOpen(true);
@@ -47,7 +55,15 @@ const Dashboard = () => {
     setModalOpen(false);
     setEditingTask(null);
   };
+  const handleFilterChange = (value) => {
+    setFilter(value);
+    setPage(1);
+  };
 
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setPage(1);
+  };
   const handleSubmit = async (form) => {
     if (editingTask) {
       return await updateTask(editingTask._id, form);
@@ -69,8 +85,8 @@ const Dashboard = () => {
     if (!result.ok) setGlobalError(result.msg);
   };
 
-  const pending = tasks.filter((t) => t.status === "pending").length;
-  const completed = tasks.filter((t) => t.status === "completed").length;
+  // const pending = tasks.filter((t) => t.status === "pending").length;
+  // const completed = tasks.filter((t) => t.status === "completed").length;
 
   const filtered = [...tasks].sort((a, b) => {
     if (sort === "newest") return new Date(b.createdAt) - new Date(a.createdAt);
@@ -101,9 +117,9 @@ const Dashboard = () => {
         onAddTask={openAdd}
         activeNav={activeNav}
         setActiveNav={setActiveNav}
-        setFilter={setFilter}
+        setFilter={handleFilterChange}
         search={search}
-        setSearch={setSearch}
+        setSearch={handleSearchChange}
       />
 
       <div className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
@@ -120,8 +136,8 @@ const Dashboard = () => {
               month: "long",
               year: "numeric",
             })}
-            {pending > 0 &&
-              ` · ${pending} task${pending > 1 ? "s" : ""} pending`}
+            {totalPending > 0 &&
+              ` · ${totalPending} task${totalPending > 1 ? "s" : ""} pending`}
           </p>
         </div>
 
@@ -141,19 +157,19 @@ const Dashboard = () => {
           {[
             {
               label: "Total tasks",
-              value: tasks.length,
+              value: total,
               accent: "bg-[#059669]",
               color: "text-[#111827]",
             },
             {
               label: "Pending",
-              value: pending,
+              value: totalPending,
               accent: "bg-[#D97706]",
               color: "text-[#D97706]",
             },
             {
               label: "Completed",
-              value: completed,
+              value: totalCompleted,
               accent: "bg-[#2563EB]",
               color: "text-[#2563EB]",
             },
@@ -180,12 +196,12 @@ const Dashboard = () => {
         {/* Filter component */}
         <FilterBar
           filter={filter}
-          setFilter={setFilter}
+          setFilter={handleFilterChange}
           sort={sort}
           setSort={setSort}
-          total={tasks.length}
-          pending={pending}
-          completed={completed}
+          total={total}
+          pending={totalPending}
+          completed={totalCompleted}
         />
 
         {/* Task list */}
@@ -209,6 +225,11 @@ const Dashboard = () => {
             ))}
           </div>
         )}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       </div>
       <Footer />
       {/* Mobile bottom nav */}
@@ -219,7 +240,7 @@ const Dashboard = () => {
               key={id}
               onClick={() => {
                 setActiveNav(id);
-                setFilter(id);
+                handleFilterChange(id);
               }}
               className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition ${
                 activeNav === id ? "text-[#059669]" : "text-[#9CA3AF]"

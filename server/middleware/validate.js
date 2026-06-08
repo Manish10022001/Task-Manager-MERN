@@ -36,14 +36,27 @@ const validateLogin = (req, res, next) => {
   }
   next();
 };
-//middlware for filter
-const validateQuery = (req, res, next) => {
-  const { status } = req.query;
+//middlware for filter and pagination
+const validateQueryAndPagination = (req, res, next) => {
+  const { status, page, limit } = req.query;
   const allowed = ["all", "pending", "completed"];
 
   if (status && !allowed.includes(status)) {
     return res.status(400).json({ message: "Invalid status filter" });
   }
+
+  if (page && (isNaN(page) || parseInt(page) < 1)) {
+    return res.status(400).json({ message: "Invalid page number" });
+  }
+
+  if (limit && (isNaN(limit) || parseInt(limit) < 1 || parseInt(limit) > 50)) {
+    return res.status(400).json({ message: "Limit must be between 1 and 50" });
+  }
   next();
 };
-module.exports = { validateRegister, validateLogin, validateQuery };
+
+module.exports = {
+  validateRegister,
+  validateLogin,
+  validateQueryAndPagination,
+};
